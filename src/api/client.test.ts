@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { ApiError, buildUrl, errorMessages, parseErrorBody, request } from "./client";
 import { NETWORK_ERROR, SECTION_UNAVAILABLE } from "../messages";
+import { normalizeApiBaseUrl } from "../config";
 
 async function rejectsWithApiError(promise: Promise<unknown>): Promise<ApiError> {
   const error: unknown = await promise.then(
@@ -59,10 +60,30 @@ describe("public requests", () => {
 });
 
 describe("buildUrl", () => {
-  it("uses no external base URL and omits empty query values", () => {
+  it("omits empty query values when the environment is unset", () => {
     expect(buildUrl("/health")).toBe("/api/v1/health");
     expect(buildUrl("/prices/reference", { species_id: "a", location_id: "b", grade: null, quote: "" })).toBe(
       "/api/v1/prices/reference?species_id=a&location_id=b",
     );
+  });
+
+  it("normalizes a configured backend origin", () => {
+    expect(normalizeApiBaseUrl(" https://api.example.com/ ")).toBe("https://api.example.com");
+    expect(normalizeApiBaseUrl("https://api.example.com/api/v1/")).toBe("https://api.example.com");
+  });
+
+  it("builds requests against the configured backend origin", async () => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://api.example.com/");
+    vi.resetModules();
+    const { buildUrl: configuredBuildUrl, request: configuredRequest } = await import("./client");
+    expect(configuredBuildUrl("/health")).toBe("https://api.example.com/api/v1/health");
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ status: "ok" }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await configuredRequest("/health");
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("https://api.example.com/api/v1/health");
+    expect(init.headers).not.toHaveProperty("Authorization");
+    vi.unstubAllEnvs();
+    vi.resetModules();
   });
 });

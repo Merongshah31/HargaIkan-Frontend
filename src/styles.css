@@ -290,6 +290,31 @@ main.container {
   min-height: var(--header-h);
 }
 
+.session-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  white-space: nowrap;
+}
+.session-nav .button,
+.session-nav button {
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: var(--fs-small);
+}
+.session-name {
+  color: var(--text-2-strong);
+  font-size: var(--fs-small);
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (min-width: 734px) and (max-width: 1100px) {
+  .header-inner { flex-wrap: wrap; padding-top: var(--s-1); }
+  .nav-wrap { order: 3; width: 100%; overflow-x: auto; }
+  .session-nav { margin-left: auto; }
+}
+
 .brand {
   font-size: 1.1875rem;
   font-weight: 600;
@@ -355,6 +380,12 @@ main.container {
   .brand {
     line-height: 44px;
   }
+  .session-nav {
+    position: absolute;
+    right: var(--gutter);
+    top: 4px;
+  }
+  .session-name { max-width: 7rem; }
   .nav-wrap {
     overflow-x: auto;
     scrollbar-width: none;
@@ -426,6 +457,18 @@ main.container {
 }
 .more-link {
   margin-top: var(--s-3);
+}
+
+.home-intro { margin: 0 0 var(--s-4); }
+.home-intro h2 { margin-bottom: var(--s-3); }
+.home-features { display: grid; gap: var(--s-2); grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.home-features .card { margin: 0; }
+.home-feature-number { color: var(--accent); font-size: var(--fs-small); font-weight: 700; }
+.home-features h3 { margin: var(--s-1) 0; }
+.home-features p { color: var(--text-2-strong); margin: 0; }
+.login-form { max-width: 28rem; }
+@media (max-width: 733.98px) {
+  .home-features { grid-template-columns: 1fr; }
 }
 
 /* ---------------------------------------------------------------------------------------------

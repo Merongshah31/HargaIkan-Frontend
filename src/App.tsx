@@ -1,4 +1,5 @@
-import { Link, Route, Routes } from "react-router-dom";
+import { Link, Navigate, Route, Routes } from "react-router-dom";
+import type { ReactNode } from "react";
 import { Layout } from "./components/Layout";
 import { PageHeader } from "./components/PageHeader";
 import { BACK_TO_DASHBOARD, PAGES } from "./messages";
@@ -7,8 +8,19 @@ import { Dashboard } from "./pages/Dashboard";
 import { Perjalanan } from "./pages/Perjalanan";
 import { Profil } from "./pages/Profil";
 import { Ramalan } from "./pages/Ramalan";
+import { Home } from "./pages/Home";
+import { Login } from "./pages/Login";
 import { GuestPreferencesProvider } from "./guest/GuestPreferencesProvider";
 import { CatalogProvider } from "./session/CatalogProvider";
+import { DemoSessionProvider, useDemoSession } from "./session/DemoSessionProvider";
+
+function RequireDemo({ children, onboarding = false }: { children: ReactNode; onboarding?: boolean }) {
+  const { session } = useDemoSession();
+  if (!session) return <Navigate to="/login" replace />;
+  if (!session.onboardingComplete && !onboarding) return <Navigate to="/onboarding" replace />;
+  if (session.onboardingComplete && onboarding) return <Navigate to="/dashboard" replace />;
+  return children;
+}
 
 function NotFound() {
   return (
@@ -22,22 +34,27 @@ function NotFound() {
   );
 }
 
-/** Routes and public browser-only providers; main.tsx supplies the router. */
+/** Routes and browser-only demo state; API calls remain public and token-free. */
 export function App() {
   return (
     <GuestPreferencesProvider>
-      <CatalogProvider>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="cari" element={<CariIkan />} />
-            <Route path="profil" element={<Profil />} />
-            <Route path="ramalan" element={<Ramalan />} />
-            <Route path="perjalanan" element={<Perjalanan />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-      </CatalogProvider>
+      <DemoSessionProvider>
+        <CatalogProvider>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route index element={<Home />} />
+              <Route path="login" element={<Login />} />
+              <Route path="onboarding" element={<RequireDemo onboarding><Profil onboarding /></RequireDemo>} />
+              <Route path="dashboard" element={<RequireDemo><Dashboard /></RequireDemo>} />
+              <Route path="cari" element={<RequireDemo><CariIkan /></RequireDemo>} />
+              <Route path="profil" element={<RequireDemo><Profil /></RequireDemo>} />
+              <Route path="ramalan" element={<RequireDemo><Ramalan /></RequireDemo>} />
+              <Route path="perjalanan" element={<RequireDemo><Perjalanan /></RequireDemo>} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+          </Routes>
+        </CatalogProvider>
+      </DemoSessionProvider>
     </GuestPreferencesProvider>
   );
 }

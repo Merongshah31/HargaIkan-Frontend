@@ -1,5 +1,7 @@
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import type { SourceLabelText } from "../api/types";
+import { useGuestPreferences } from "../guest/GuestPreferencesProvider";
+import { useDemoSession } from "../session/DemoSessionProvider";
 import {
   BRAND,
   FOOTER_NOTE,
@@ -8,11 +10,12 @@ import {
   NAV_LABELS,
   SKIP_LINK,
   SOURCE_SHORT_DESCRIPTIONS,
+  SESSION_NAV,
 } from "../messages";
 import { SourceBadge } from "./Labels";
 
 const NAV = [
-  { to: "/", label: NAV_LABELS.dashboard, end: true },
+  { to: "/dashboard", label: NAV_LABELS.dashboard },
   { to: "/cari", label: NAV_LABELS.cari },
   { to: "/profil", label: NAV_LABELS.profil },
   { to: "/ramalan", label: NAV_LABELS.ramalan },
@@ -20,6 +23,16 @@ const NAV = [
 ];
 
 export function Layout() {
+  const { session, logout } = useDemoSession();
+  const { clear } = useGuestPreferences();
+  const navigate = useNavigate();
+
+  const onLogout = () => {
+    clear();
+    logout();
+    navigate("/", { replace: true });
+  };
+
   return (
     <>
       <a href="#main" className="skip-link">
@@ -32,15 +45,21 @@ export function Layout() {
           </Link>
           <nav aria-label={NAV_LABEL} className="nav-wrap">
             <ul className="nav">
-              {NAV.map((item) => (
+              <li><NavLink to="/" end>{NAV_LABELS.home}</NavLink></li>
+              {session?.onboardingComplete && NAV.map((item) => (
                 <li key={item.to}>
-                  <NavLink to={item.to} end={item.end}>
+                  <NavLink to={item.to}>
                     {item.label}
                   </NavLink>
                 </li>
               ))}
+              {session && !session.onboardingComplete && <li><NavLink to="/onboarding">{NAV_LABELS.profil}</NavLink></li>}
             </ul>
           </nav>
+          <div className="session-nav">
+            {session ? <><span className="session-name">{session.name}</span><button type="button" className="secondary" onClick={onLogout}>{SESSION_NAV.logout}</button></>
+              : <Link className="button" to="/login">{SESSION_NAV.login}</Link>}
+          </div>
         </div>
       </header>
       <main id="main" className="container" tabIndex={-1}>

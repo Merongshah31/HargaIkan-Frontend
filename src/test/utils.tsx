@@ -2,6 +2,7 @@ import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { vi } from "vitest";
 import { App } from "../App";
+import { DEMO_SESSION_STORAGE_KEY } from "../session/DemoSessionProvider";
 import * as fixtures from "./fixtures";
 
 export interface MockCall {
@@ -63,4 +64,9 @@ export function renderApp(path = "/") {
       <App />
     </MemoryRouter>,
   );
+}
+
+export function renderDemoApp(path = "/dashboard", onboardingComplete = true) {
+  sessionStorage.setItem(DEMO_SESSION_STORAGE_KEY, JSON.stringify({ name: "Aisyah", onboardingComplete }));
+  return renderApp(path);
 }

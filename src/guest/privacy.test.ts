@@ -6,14 +6,14 @@ const frontendSources = import.meta.glob("../**/*.{ts,tsx}", {
   query: "?raw",
 }) as Record<string, string>;
 
-describe("guest-only frontend boundary", () => {
-  it("contains no account SDK, sign-in, build-variable, or private-route source references", () => {
+describe("token-free demo boundary", () => {
+  it("contains no account SDK or private backend route references", () => {
     const prohibited = [
       ["@", "supabase"].join(""),
       ["signIn", "Anonymously"].join(""),
-      ["VI", "TE_"].join(""),
       ["/", "session", "/demo"].join(""),
       ["/", "me", "/"].join(""),
+      ["Bearer", " "].join(""),
     ];
 
     for (const [file, content] of Object.entries(frontendSources)) {

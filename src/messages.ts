@@ -51,12 +51,14 @@ export const EYEBROW = "HARGAIKAN / MARKET INTELLIGENCE";
 export const SKIP_LINK = "Skip to main content";
 export const NAV_LABEL = "Primary navigation";
 export const NAV_LABELS = {
-  dashboard: "Home",
+  home: "Home",
+  dashboard: "Dashboard",
   cari: "Fish finder",
   profil: "Preferences",
   ramalan: "Forecast",
   perjalanan: "Travel",
 } as const;
+export const SESSION_NAV = { login: "Log in", logout: "Log out" } as const;
 export const LEGEND_TITLE = "Price source labels";
 export const FOOTER_NOTE =
   "Every number is shown with its source label. HargaIkan never requests your device location.";
@@ -69,6 +71,18 @@ export const SOURCE_SHORT_DESCRIPTIONS: Record<SourceLabelText, string> = {
 };
 
 export const PAGES = {
+  home: {
+    title: "Better fish decisions start here.",
+    lead: "Explore historical fish prices across Kuala Lumpur, compare a seller’s quote, and plan the full cost of your trip.",
+  },
+  login: {
+    title: "Welcome to HargaIkan.",
+    lead: "Enter a name to try the hackathon demo. No account or password is needed.",
+  },
+  onboarding: {
+    title: "Make HargaIkan yours.",
+    lead: "Tell us your fish preferences before exploring the dashboard. You can change them later.",
+  },
   dashboard: {
     title: "Know your fish price.",
     lead: "Compare historical references across Kuala Lumpur before you buy.",
@@ -93,6 +107,27 @@ export const PAGES = {
     title: "Page not found",
     lead: "The page you requested does not exist or has moved.",
   },
+} as const;
+
+export const HOME = {
+  startAction: "Start the demo",
+  continueAction: "Continue the demo",
+  howItWorks: "What you can do",
+  compareTitle: "Check a price",
+  compareText: "See a seller’s quote beside a historical reference range, with the source clearly shown.",
+  findTitle: "Find another fish",
+  findText: "Search the fish catalog and see verified cheaper alternatives when data is available.",
+  travelTitle: "Count the trip",
+  travelText: "Add the distance, fare, or other travel details you enter to understand your total cost.",
+  demoNote: "Demo login is local to this browser tab. It does not verify identity or create a backend account.",
+} as const;
+
+export const LOGIN = {
+  nameLabel: "Your name",
+  namePlaceholder: "For example, Aisyah",
+  nameError: "Enter your name to continue.",
+  continueAction: "Continue to preferences",
+  sessionNote: "This is a demo session. No password or identity details are collected.",
 } as const;
 
 export const DASHBOARD = {
@@ -126,6 +161,7 @@ export const PROFILE = {
     other: "Other",
   },
   saveAction: "Save preferences",
+  startAction: "Save and open dashboard",
   clearAction: "Clear preferences",
   clearConfirmation: "Clear your saved browser preferences?",
   cancelAction: "Cancel",

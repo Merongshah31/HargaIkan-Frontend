@@ -2,8 +2,9 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { GUEST_PREFERENCES_STORAGE_KEY } from "../guest/GuestPreferencesProvider";
+import { DEMO_SESSION_STORAGE_KEY } from "../session/DemoSessionProvider";
 import * as fixtures from "../test/fixtures";
-import { mockFetch, renderApp } from "../test/utils";
+import { mockFetch, renderApp, renderDemoApp } from "../test/utils";
 
 function hasPrivatePath(path: string): boolean {
   return path.startsWith(["/", "me"].join("")) || path.startsWith(["/", "session"].join(""));
@@ -25,7 +26,7 @@ describe("Fish finder", () => {
   it("uses public recommendations and hides non-production disclosure", async () => {
     const user = userEvent.setup();
     const { calls } = referenceHandler();
-    renderApp("/cari");
+    renderDemoApp("/cari");
 
     await screen.findByRole("option", { name: "Kuala Lumpur" });
     await user.type(screen.getByLabelText("Fish name"), "kembung");
@@ -47,7 +48,7 @@ describe("Guest preferences", () => {
   it("asks five questions, saves only to browser storage, and confirms clearing", async () => {
     const user = userEvent.setup();
     const { calls } = mockFetch();
-    renderApp("/profil");
+    renderDemoApp("/profil");
 
     const fishChoices = await screen.findAllByLabelText("IKAN KEMBUNG");
     expect(screen.getByRole("group", { name: "What fish do you buy most often?" })).toBeInTheDocument();
@@ -84,7 +85,7 @@ describe("Guest preferences", () => {
   it("rejects a budget outside the local range without persisting it", async () => {
     const user = userEvent.setup();
     mockFetch();
-    renderApp("/profil");
+    renderDemoApp("/profil");
 
     await screen.findByLabelText("What is your usual budget?");
     await user.type(screen.getByLabelText("What is your usual budget?"), "1001");
@@ -99,7 +100,7 @@ describe("Navigation and travel", () => {
   it("uses English navigation and accessible travel controls", async () => {
     const user = userEvent.setup();
     mockFetch();
-    renderApp("/perjalanan");
+    renderDemoApp("/perjalanan");
 
     const group = screen.getByRole("radiogroup", { name: "Travel mode" });
     expect(within(group).getByRole("radio", { name: "Car" })).toBeChecked();
@@ -112,7 +113,7 @@ describe("Navigation and travel", () => {
     const { calls } = mockFetch((call) =>
       call.path === "/travel/estimate" ? { body: fixtures.travelNotEstimated } : undefined,
     );
-    renderApp("/perjalanan");
+    renderDemoApp("/perjalanan");
 
     await user.click(screen.getByRole("button", { name: "Calculate estimate" }));
     expect(await screen.findByRole("region", { name: "Cost estimate" })).toHaveTextContent(
@@ -122,8 +123,8 @@ describe("Navigation and travel", () => {
   });
 });
 
-describe("Homepage dashboard", () => {
-  it("shows the guest-first hero and loads public market watch references only", async () => {
+describe("Demo dashboard", () => {
+  it("loads public market watch references only", async () => {
     const overview = {
       ...fixtures.overview,
       suggestions: [
@@ -166,9 +167,9 @@ describe("Homepage dashboard", () => {
       }
       return undefined;
     });
-    renderApp("/");
+    renderDemoApp("/dashboard");
 
-    expect(screen.getByRole("heading", { name: "Know your fish price." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Welcome, Aisyah." })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Find a fish" })).toHaveAttribute("href", "/cari");
     expect(screen.getByRole("link", { name: "Set your preferences" })).toHaveAttribute("href", "/profil");
     expect(await screen.findByRole("heading", { name: "Market watch" })).toBeInTheDocument();
@@ -191,12 +192,60 @@ describe("Homepage dashboard", () => {
       }),
     );
     mockFetch();
-    renderApp("/");
+    renderDemoApp("/dashboard");
 
     expect(await screen.findByRole("heading", { name: "Your starting point" })).toBeInTheDocument();
     expect(screen.getByText(/IKAN KEMBUNG/)).toBeInTheDocument();
     expect(screen.getByText(/RM42.50\/kg/)).toBeInTheDocument();
-    expect(screen.getByText(/Kuala Lumpur/)).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "Your starting point" })).getByText(/Kuala Lumpur/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Edit preferences" })).toHaveAttribute("href", "/profil");
+  });
+});
+
+describe("Homepage and demo login", () => {
+  it("shows a public homepage with a demo entry point", () => {
+    mockFetch();
+    renderApp("/");
+    expect(screen.getByRole("heading", { name: "Better fish decisions start here." })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Start the demo" })).toHaveAttribute("href", "/login");
+  });
+
+  it("requires a demo name, asks the five profile questions, then opens the dashboard without a token", async () => {
+    const user = userEvent.setup();
+    const { calls } = mockFetch();
+    renderApp("/dashboard");
+
+    expect(await screen.findByRole("heading", { name: "Welcome to HargaIkan." })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Continue to preferences" }));
+    expect(screen.getByText("Enter your name to continue.")).toBeInTheDocument();
+    await user.type(screen.getByLabelText("Your name"), "Aisyah");
+    await user.click(screen.getByRole("button", { name: "Continue to preferences" }));
+
+    expect(await screen.findByRole("heading", { name: "Make HargaIkan yours." })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "What fish do you buy most often?" })).toBeInTheDocument();
+    expect(screen.getByLabelText("What is your usual budget?")).toBeInTheDocument();
+    expect(screen.getByLabelText("Where do you usually shop?")).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Which fish would you like to avoid?" })).toBeInTheDocument();
+    expect(screen.getByLabelText("How do you usually cook fish?")).toBeInTheDocument();
+    expect(JSON.parse(sessionStorage.getItem(DEMO_SESSION_STORAGE_KEY) ?? "null")).toEqual({ name: "Aisyah", onboardingComplete: false });
+
+    await user.click((await screen.findAllByLabelText("IKAN KEMBUNG"))[0]);
+    await user.click(screen.getByRole("button", { name: "Save and open dashboard" }));
+    expect(await screen.findByRole("heading", { name: "Welcome, Aisyah." })).toBeInTheDocument();
+    expect(JSON.parse(sessionStorage.getItem(DEMO_SESSION_STORAGE_KEY) ?? "null")).toEqual({ name: "Aisyah", onboardingComplete: true });
+    expect(localStorage.getItem(GUEST_PREFERENCES_STORAGE_KEY)).toContain(fixtures.KEMBUNG.id);
+    expect(calls.every((call) => !hasPrivatePath(call.path) && !Object.keys(call.headers).some((h) => h.toLowerCase() === "authorization"))).toBe(true);
+
+    await user.click(screen.getByRole("button", { name: "Log out" }));
+    expect(await screen.findByRole("heading", { name: "Better fish decisions start here." })).toBeInTheDocument();
+    expect(sessionStorage.getItem(DEMO_SESSION_STORAGE_KEY)).toBeNull();
+    expect(localStorage.getItem(GUEST_PREFERENCES_STORAGE_KEY)).toBeNull();
+  });
+
+  it("keeps unfinished sessions in onboarding", async () => {
+    mockFetch();
+    renderDemoApp("/cari", false);
+    expect(await screen.findByRole("heading", { name: "Make HargaIkan yours." })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Fish finder" })).not.toBeInTheDocument();
   });
 });

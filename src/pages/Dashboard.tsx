@@ -10,8 +10,10 @@ import { rmPerKg } from "../format";
 import { useGuestPreferences } from "../guest/GuestPreferencesProvider";
 import { DASHBOARD, PAGES } from "../messages";
 import { useCatalog } from "../session/CatalogProvider";
+import { useDemoSession } from "../session/DemoSessionProvider";
 
 export function Dashboard() {
+  const { session } = useDemoSession();
   const { preferences, isComplete } = useGuestPreferences();
   const { species, locations } = useCatalog();
   const [overview, setOverview] = useState<OverviewOut | null>(null);
@@ -77,7 +79,7 @@ export function Dashboard() {
 
   return (
     <>
-      <PageHeader title={PAGES.dashboard.title} lead={PAGES.dashboard.lead}>
+      <PageHeader title={session ? `Welcome, ${session.name}.` : PAGES.dashboard.title} lead={PAGES.dashboard.lead}>
         <p className="hero-actions">
           <Link to="/cari" className="button">
             {DASHBOARD.findFish}
