@@ -59,6 +59,7 @@ export const NAV_LABELS = {
   perjalanan: "Travel",
 } as const;
 export const SESSION_NAV = { login: "Log in", logout: "Log out" } as const;
+export const DEMO_DATA_NOTICE = "Demo data: fish prices are synthetic examples, not live market prices.";
 export const LEGEND_TITLE = "Price source labels";
 export const FOOTER_NOTE =
   "Every number is shown with its source label. HargaIkan never requests your device location.";

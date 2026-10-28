@@ -23,7 +23,7 @@ function referenceHandler() {
 }
 
 describe("Fish finder", () => {
-  it("uses public recommendations and hides non-production disclosure", async () => {
+  it("uses public recommendations and labels synthetic demo data", async () => {
     const user = userEvent.setup();
     const { calls } = referenceHandler();
     renderDemoApp("/cari");
@@ -34,7 +34,7 @@ describe("Fish finder", () => {
 
     const card = await screen.findByRole("region", { name: /Price reference: IKAN KEMBUNG/ });
     expect(within(card).getByText("Historical price")).toBeInTheDocument();
-    expect(screen.queryByText(/data demo|synthetic/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Demo data: fish prices are synthetic examples/)).toBeInTheDocument();
 
     await user.type(screen.getByLabelText("Seller price (RM/kg, optional)"), "8");
     await user.click(screen.getByRole("button", { name: "Check price" }));
@@ -177,7 +177,7 @@ describe("Demo dashboard", () => {
     expect(calls.some((call) => call.path === "/overview")).toBe(true);
     expect(calls.some((call) => call.path === "/prices/reference")).toBe(true);
     expect(calls.some((call) => hasPrivatePath(call.path))).toBe(false);
-    expect(screen.queryByText(/data demo|synthetic/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Demo data: fish prices are synthetic examples/)).toBeInTheDocument();
   });
 
   it("shows saved local preferences with catalogue names", async () => {

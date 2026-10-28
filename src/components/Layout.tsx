@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import type { SourceLabelText } from "../api/types";
 import { useGuestPreferences } from "../guest/GuestPreferencesProvider";
 import { useDemoSession } from "../session/DemoSessionProvider";
+import { useCatalog } from "../session/CatalogProvider";
 import {
   BRAND,
   FOOTER_NOTE,
@@ -11,6 +12,7 @@ import {
   SKIP_LINK,
   SOURCE_SHORT_DESCRIPTIONS,
   SESSION_NAV,
+  DEMO_DATA_NOTICE,
 } from "../messages";
 import { SourceBadge } from "./Labels";
 
@@ -24,6 +26,7 @@ const NAV = [
 
 export function Layout() {
   const { session, logout } = useDemoSession();
+  const { demo } = useCatalog();
   const { clear } = useGuestPreferences();
   const navigate = useNavigate();
 
@@ -41,7 +44,10 @@ export function Layout() {
       <header className="site-header">
         <div className="container header-inner">
           <Link to="/" className="brand">
-            {BRAND}
+            <span className="brand-logo-frame">
+              <img src="/hargaikan-logo.png" alt="" />
+            </span>
+            <span className="sr-only">{BRAND}</span>
           </Link>
           <nav aria-label={NAV_LABEL} className="nav-wrap">
             <ul className="nav">
@@ -62,6 +68,7 @@ export function Layout() {
           </div>
         </div>
       </header>
+      {demo && <div className="demo-banner" role="status"><div className="container">{DEMO_DATA_NOTICE}</div></div>}
       <main id="main" className="container" tabIndex={-1}>
         <Outlet />
       </main>

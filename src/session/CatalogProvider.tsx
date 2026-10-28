@@ -7,6 +7,7 @@ import type { LocationOut, SpeciesOut } from "../api/types";
 export interface CatalogValue {
   species: SpeciesOut[];
   locations: LocationOut[];
+  demo: boolean;
   loading: boolean;
   speciesError: string[] | null;
   locationsError: string[] | null;
@@ -18,6 +19,7 @@ const CatalogContext = createContext<CatalogValue | null>(null);
 
 export function CatalogProvider({ children }: { children: ReactNode }) {
   const [species, setSpecies] = useState<SpeciesOut[]>([]);
+  const [demo, setDemo] = useState(false);
   const [locations, setLocations] = useState<LocationOut[]>([]);
   const [speciesError, setSpeciesError] = useState<string[] | null>(null);
   const [locationsError, setLocationsError] = useState<string[] | null>(null);
@@ -27,7 +29,12 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     let alive = true;
     api
       .species()
-      .then((r) => alive && setSpecies(r.items))
+      .then((r) => {
+        if (alive) {
+          setSpecies(r.items);
+          setDemo(r.demo);
+        }
+      })
       .catch((e) => alive && setSpeciesError(errorMessages(e)))
       .finally(() => alive && setPending((n) => n - 1));
     api
@@ -45,12 +52,13 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     return {
       species,
       locations,
+      demo,
       loading: pending > 0,
       speciesError,
       locationsError,
       defaultLocationId: def?.id ?? "",
     };
-  }, [species, locations, pending, speciesError, locationsError]);
+  }, [species, locations, demo, pending, speciesError, locationsError]);
 
   return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>;
 }
