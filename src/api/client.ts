@@ -4,9 +4,11 @@
 import { API_BASE_URL, API_PREFIX } from "../config";
 import { NETWORK_ERROR, SECTION_UNAVAILABLE } from "../messages";
 import type {
+  AlertsOut,
   ForecastOut,
   HealthOut,
   LocationListOut,
+  ModelSnapshotOut,
   OverviewOut,
   RecommendationsOut,
   ReferenceOut,
@@ -124,6 +126,8 @@ export const api = {
     request<RecommendationsOut>("/recommendations", { query: params }),
   forecast: (params: { species_id: string; location_id: string; quote?: string | null }) =>
     request<ForecastOut>("/forecast", { query: params }),
+  forecastSnapshot: () => request<ModelSnapshotOut>("/forecast/snapshot"),
   travel: (body: TravelIn) => request<TravelOut>("/travel/estimate", { method: "POST", body }),
   overview: () => request<OverviewOut>("/overview"),
+  alerts: () => request<AlertsOut>("/alerts"),
 };

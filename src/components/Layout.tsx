@@ -1,88 +1,101 @@
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet } from "react-router-dom";
 import type { SourceLabelText } from "../api/types";
-import { useGuestPreferences } from "../guest/GuestPreferencesProvider";
-import { useDemoSession } from "../session/DemoSessionProvider";
-import { useCatalog } from "../session/CatalogProvider";
-import {
-  BRAND,
-  FOOTER_NOTE,
-  LEGEND_TITLE,
-  NAV_LABEL,
-  NAV_LABELS,
-  SKIP_LINK,
-  SOURCE_SHORT_DESCRIPTIONS,
-  SESSION_NAV,
-  DEMO_DATA_NOTICE,
-} from "../messages";
+import { useLanguage } from "../i18n";
+import { useSession } from "../session/SessionProvider";
 import { SourceBadge } from "./Labels";
-
-const NAV = [
-  { to: "/dashboard", label: NAV_LABELS.dashboard },
-  { to: "/cari", label: NAV_LABELS.cari },
-  { to: "/profil", label: NAV_LABELS.profil },
-  { to: "/ramalan", label: NAV_LABELS.ramalan },
-  { to: "/perjalanan", label: NAV_LABELS.perjalanan },
-];
+import { OfflineNotice } from "./OfflineNotice";
 
 export function Layout() {
-  const { session, logout } = useDemoSession();
-  const { demo } = useCatalog();
-  const { clear } = useGuestPreferences();
-  const navigate = useNavigate();
+  const { session, signOut } = useSession();
+  const { lang, setLang, t } = useLanguage();
 
-  const onLogout = () => {
-    clear();
-    logout();
-    navigate("/", { replace: true });
-  };
+  const navItems = [
+    { to: "/dashboard", label: t.navLabels.dashboard },
+    { to: "/cari", label: t.navLabels.cari },
+    { to: "/profil", label: t.navLabels.profil },
+    { to: "/ramalan", label: t.navLabels.ramalan },
+    { to: "/perjalanan", label: t.navLabels.perjalanan },
+  ];
 
   return (
     <>
       <a href="#main" className="skip-link">
-        {SKIP_LINK}
+        {t.skipLink}
       </a>
+      <OfflineNotice />
       <header className="site-header">
         <div className="container header-inner">
           <Link to="/" className="brand">
             <span className="brand-logo-frame">
               <img src="/hargaikan-logo.png" alt="" />
             </span>
-            <span className="sr-only">{BRAND}</span>
+            <span className="sr-only">{t.brand}</span>
           </Link>
-          <nav aria-label={NAV_LABEL} className="nav-wrap">
+          <nav aria-label={t.navLabel} className="nav-wrap">
             <ul className="nav">
-              <li><NavLink to="/" end>{NAV_LABELS.home}</NavLink></li>
-              {session?.onboardingComplete && NAV.map((item) => (
+              <li>
+                <NavLink to="/" end>
+                  {t.navLabels.home}
+                </NavLink>
+              </li>
+              {navItems.map((item) => (
                 <li key={item.to}>
-                  <NavLink to={item.to}>
-                    {item.label}
-                  </NavLink>
+                  <NavLink to={item.to}>{item.label}</NavLink>
                 </li>
               ))}
-              {session && !session.onboardingComplete && <li><NavLink to="/onboarding">{NAV_LABELS.profil}</NavLink></li>}
             </ul>
           </nav>
-          <div className="session-nav">
-            {session ? <><span className="session-name">{session.name}</span><button type="button" className="secondary" onClick={onLogout}>{SESSION_NAV.logout}</button></>
-              : <Link className="button" to="/login">{SESSION_NAV.login}</Link>}
+          <div className="header-action">
+            <div className="lang-switch" role="group" aria-label={t.langSwitchLabel}>
+              <button
+                type="button"
+                className={lang === "en" ? "lang-btn active" : "lang-btn"}
+                aria-pressed={lang === "en"}
+                onClick={() => setLang("en")}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                className={lang === "ms" ? "lang-btn active" : "lang-btn"}
+                aria-pressed={lang === "ms"}
+                onClick={() => setLang("ms")}
+              >
+                BM
+              </button>
+            </div>
+            {session ? (
+              <span className="header-session">
+                <span className="header-session-name">{session.name}</span>
+                <button type="button" className="secondary" onClick={signOut}>
+                  {t.login.signOutAction}
+                </button>
+              </span>
+            ) : (
+              <Link className="text-link" to="/login">
+                {t.login.linkLabel}
+              </Link>
+            )}
+            <Link className="button" to="/cari">
+              {t.headerAction}
+            </Link>
           </div>
         </div>
       </header>
-      {demo && <div className="demo-banner" role="status"><div className="container">{DEMO_DATA_NOTICE}</div></div>}
       <main id="main" className="container" tabIndex={-1}>
         <Outlet />
       </main>
       <footer className="site-footer">
         <div className="container">
-          <h2 className="footer-title">{LEGEND_TITLE}</h2>
+          <h2 className="footer-title">{t.legendTitle}</h2>
           <ul className="legend">
-            {(Object.keys(SOURCE_SHORT_DESCRIPTIONS) as SourceLabelText[]).map((label) => (
+            {(Object.keys(t.sourceShortDescriptions) as SourceLabelText[]).map((label) => (
               <li key={label}>
-                <SourceBadge label={label} /> <span>{SOURCE_SHORT_DESCRIPTIONS[label]}</span>
+                <SourceBadge label={label} /> <span>{t.sourceShortDescriptions[label]}</span>
               </li>
             ))}
           </ul>
-          <p className="footer-note">{FOOTER_NOTE}</p>
+          <p className="footer-note">{t.footerNote}</p>
         </div>
       </footer>
     </>

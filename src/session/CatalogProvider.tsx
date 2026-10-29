@@ -7,7 +7,7 @@ import type { LocationOut, SpeciesOut } from "../api/types";
 export interface CatalogValue {
   species: SpeciesOut[];
   locations: LocationOut[];
-  demo: boolean;
+  syntheticCatalog: boolean;
   loading: boolean;
   speciesError: string[] | null;
   locationsError: string[] | null;
@@ -19,7 +19,7 @@ const CatalogContext = createContext<CatalogValue | null>(null);
 
 export function CatalogProvider({ children }: { children: ReactNode }) {
   const [species, setSpecies] = useState<SpeciesOut[]>([]);
-  const [demo, setDemo] = useState(false);
+  const [syntheticCatalog, setSyntheticCatalog] = useState(false);
   const [locations, setLocations] = useState<LocationOut[]>([]);
   const [speciesError, setSpeciesError] = useState<string[] | null>(null);
   const [locationsError, setLocationsError] = useState<string[] | null>(null);
@@ -31,8 +31,8 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       .species()
       .then((r) => {
         if (alive) {
-          setSpecies(r.items);
-          setDemo(r.demo);
+          setSyntheticCatalog(r.demo);
+          setSpecies(r.demo ? [] : r.items);
         }
       })
       .catch((e) => alive && setSpeciesError(errorMessages(e)))
@@ -48,17 +48,18 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<CatalogValue>(() => {
-    const def = locations.find((l) => l.level === "negeri") ?? locations[0];
+    const visibleLocations = syntheticCatalog ? [] : locations;
+    const def = visibleLocations.find((l) => l.level === "negeri") ?? visibleLocations[0];
     return {
       species,
-      locations,
-      demo,
+      locations: visibleLocations,
+      syntheticCatalog,
       loading: pending > 0,
       speciesError,
       locationsError,
       defaultLocationId: def?.id ?? "",
     };
-  }, [species, locations, demo, pending, speciesError, locationsError]);
+  }, [species, locations, syntheticCatalog, pending, speciesError, locationsError]);
 
   return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>;
 }

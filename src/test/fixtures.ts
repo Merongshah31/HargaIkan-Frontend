@@ -1,5 +1,6 @@
 // Fixtures shaped like public FastAPI responses.
 import type {
+  AlertsOut,
   LocationListOut,
   OverviewOut,
   RecommendationsOut,
@@ -19,7 +20,7 @@ export const DISCLAIMER =
 
 export const species: SpeciesListOut = {
   count: 1,
-  demo: true,
+  demo: false,
   items: [
     {
       id: KEMBUNG.id,
@@ -79,10 +80,10 @@ export function reference(requested = KL, quote: number | null = null): Referenc
       period_start: "2026-07-06",
       period_end: "2026-10-25",
       grade: null,
-      band_source: "SYNTHETIC",
+      band_source: "PUBLISHED_TEST_RECORDS",
       location: KL,
       source_label: "Harga sejarah",
-      demo: true,
+      demo: false,
       demo_label: null,
     },
     grade: null,
@@ -92,7 +93,7 @@ export function reference(requested = KL, quote: number | null = null): Referenc
     verdict: quote !== null ? { kind: "below", text: "Di bawah julat sejarah", icon: "⬇️" } : null,
     chart: null,
     chart_notice: null,
-    demo: true,
+    demo: false,
   };
 }
 
@@ -130,7 +131,7 @@ export const recsWithItem: RecommendationsOut = {
       over_budget: true,
       over_budget_label: "Melebihi bajet",
       source_label: "Harga sejarah",
-      demo: true,
+      demo: false,
       demo_label: null,
     },
   ],
@@ -169,12 +170,47 @@ export const travelNotEstimated: TravelOut = {
   demo: false,
 };
 
+/** What the backend returns today: an Open-Meteo rain day plus the next public holiday. */
+export const alerts: AlertsOut = {
+  items: [
+    {
+      id: "weather-rain-2026-10-29",
+      kind: "weather",
+      title: "Hujan lebat dijangka",
+      body: "Ramalan Open-Meteo menunjukkan 15.4 mm hujan terkumpul. HargaIkan menandakan hari pada 10 mm atau lebih.",
+      source: "Open-Meteo (ramalan cuaca Kuala Lumpur, bukan amaran rasmi MET Malaysia)",
+      valid_from: "2026-10-29",
+      valid_to: "2026-10-29",
+      demo: false,
+    },
+    {
+      id: "festivity-2026-11-08-deepavali",
+      kind: "festivity",
+      title: "Deepavali",
+      body: "Perayaan ini 10 hari dari sekarang. HargaIkan menyenaraikannya daripada kalendar cuti umum, bukan ramalan harga.",
+      source: "Kalendar cuti umum Malaysia (kabinet.gov.my)",
+      valid_from: "2026-11-08",
+      valid_to: "2026-11-08",
+      demo: false,
+    },
+  ],
+  notice: null,
+  demo: false,
+};
+
+/** What the backend returns when the weather API cannot be read: the calendar still reports. */
+export const alertsWeatherUnavailable: AlertsOut = {
+  items: [alerts.items[1]],
+  notice: "Data cuaca (Open-Meteo) tidak dapat dibaca sekarang.",
+  demo: false,
+};
+
 export const overview: OverviewOut = {
   species_count: 10,
   premise_count: 8,
   latest_period: "2026-10-25",
-  demo: true,
-  demo_label: "Data demo",
+  demo: false,
+  demo_label: null,
   notice: null,
   legend: [],
   suggestions_title: "Ikan dengan rekod harga terbanyak di Kuala Lumpur",

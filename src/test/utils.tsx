@@ -2,7 +2,7 @@ import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { vi } from "vitest";
 import { App } from "../App";
-import { DEMO_SESSION_STORAGE_KEY } from "../session/DemoSessionProvider";
+import { writeSession, type Session } from "../session/SessionProvider";
 import * as fixtures from "./fixtures";
 
 export interface MockCall {
@@ -50,6 +50,8 @@ function defaults(call: MockCall): { status?: number; body: unknown } {
       return { body: fixtures.recsEmpty };
     case "/overview":
       return { body: fixtures.overview };
+    case "/alerts":
+      return { body: fixtures.alerts };
     default:
       return {
         status: 404,
@@ -58,15 +60,19 @@ function defaults(call: MockCall): { status?: number; body: unknown } {
   }
 }
 
-export function renderApp(path = "/") {
+/** A signed-in visitor who has already been through the preferences step. */
+export const SIGNED_IN: Session = { name: "Test visitor", onboardingComplete: true };
+
+export interface RenderOptions {
+  /** Pass null for a signed-out visitor. Omit to start from {@link SIGNED_IN}. */
+  session?: Session | null;
+}
+
+export function renderApp(path = "/", options: RenderOptions = {}) {
+  writeSession("session" in options ? options.session ?? null : SIGNED_IN);
   return render(
     <MemoryRouter initialEntries={[path]}>
       <App />
     </MemoryRouter>,
   );
-}
-
-export function renderDemoApp(path = "/dashboard", onboardingComplete = true) {
-  sessionStorage.setItem(DEMO_SESSION_STORAGE_KEY, JSON.stringify({ name: "Aisyah", onboardingComplete }));
-  return renderApp(path);
 }

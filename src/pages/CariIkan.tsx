@@ -5,14 +5,15 @@ import { ErrorMessages, Notice } from "../components/Labels";
 import { LocationSelect } from "../components/Pickers";
 import { Recommendations } from "../components/Recommendations";
 import { ReferenceCard } from "../components/ReferenceCard";
-import { FISH_FINDER, LOADING, PAGES } from "../messages";
 import { PageHeader } from "../components/PageHeader";
+import { translateApiText, useLanguage } from "../i18n";
 import { useCatalog } from "../session/CatalogProvider";
 
 const LocationMap = lazy(() => import("../components/LocationMap"));
 
 export function CariIkan() {
   const catalog = useCatalog();
+  const { lang, t } = useLanguage();
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [search, setSearch] = useState<SearchOut | null>(null);
@@ -108,12 +109,21 @@ export function CariIkan() {
 
   const hasPins = catalog.locations.some((location) => location.has_coordinates);
 
+  if (catalog.syntheticCatalog) {
+    return (
+      <>
+        <PageHeader title={t.pages.cari.title} lead={t.pages.cari.lead} />
+        <Notice live>{t.priceDataUnavailable}</Notice>
+      </>
+    );
+  }
+
   return (
     <>
-      <PageHeader title={PAGES.cari.title} lead={PAGES.cari.lead} />
+      <PageHeader title={t.pages.cari.title} lead={t.pages.cari.lead} />
       <form className="card form search-form" onSubmit={onSearch} role="search">
         <div className="field">
-          <label htmlFor="search-q">{FISH_FINDER.fishName}</label>
+          <label htmlFor="search-q">{t.fishFinder.fishName}</label>
           <div className="inline-form">
             <input
               id="search-q"
@@ -122,10 +132,10 @@ export function CariIkan() {
               maxLength={200}
               autoComplete="off"
               onChange={(event) => setQuery(event.target.value)}
-              placeholder={FISH_FINDER.searchPlaceholder}
+              placeholder={t.fishFinder.searchPlaceholder}
             />
             <button type="submit" disabled={searching}>
-              {searching ? FISH_FINDER.searching : FISH_FINDER.searchAction}
+              {searching ? t.fishFinder.searching : t.fishFinder.searchAction}
             </button>
           </div>
         </div>
@@ -140,7 +150,7 @@ export function CariIkan() {
         )}
         {search?.status === "candidates" && (
           <section className="card" aria-labelledby="candidate-heading">
-            <h2 id="candidate-heading">{search.confirm_prompt}</h2>
+            <h2 id="candidate-heading">{translateApiText(search.confirm_prompt, lang)}</h2>
             <ul className="choice-list">
               {search.matches.map((match) => (
                 <li key={match.species_id}>
@@ -160,26 +170,26 @@ export function CariIkan() {
         )}
         {selected && (
           <p className="selected">
-            {FISH_FINDER.selectedFish} <strong>{selected.name_ms}</strong>
+            {t.fishFinder.selectedFish} <strong>{selected.name_ms}</strong>
           </p>
         )}
       </div>
 
       <section className="card form" aria-labelledby="finder-options-heading">
-        <h2 id="finder-options-heading">{FISH_FINDER.optionsTitle}</h2>
+        <h2 id="finder-options-heading">{t.fishFinder.optionsTitle}</h2>
         <LocationSelect id="cari-location" value={locationId} onChange={setLocationId} />
         {hasPins ? (
-          <Suspense fallback={<p>{LOADING}</p>}>
+          <Suspense fallback={<p>{t.loading}</p>}>
             <LocationMap locations={catalog.locations} selectedId={locationId} onSelect={setLocationId} />
           </Suspense>
         ) : (
-          !catalog.loading && <p className="meta">{FISH_FINDER.noMapLocations}</p>
+          !catalog.loading && <p className="meta">{t.fishFinder.noMapLocations}</p>
         )}
         {reference && reference.grades.length > 0 && (
           <div className="field">
-            <label htmlFor="cari-grade">{FISH_FINDER.gradeLabel}</label>
+            <label htmlFor="cari-grade">{t.fishFinder.gradeLabel}</label>
             <select id="cari-grade" value={grade} onChange={(event) => setGrade(event.target.value)}>
-              <option value="">{FISH_FINDER.allGrades}</option>
+              <option value="">{t.fishFinder.allGrades}</option>
               {reference.grades.map((item) => (
                 <option key={item} value={item}>
                   {item}
@@ -196,24 +206,24 @@ export function CariIkan() {
           className="inline-form"
         >
           <div className="field">
-            <label htmlFor="cari-quote">{FISH_FINDER.sellerPrice}</label>
+            <label htmlFor="cari-quote">{t.fishFinder.sellerPrice}</label>
             <input
               id="cari-quote"
               inputMode="decimal"
               maxLength={32}
               value={quoteInput}
               onChange={(event) => setQuoteInput(event.target.value)}
-              placeholder={FISH_FINDER.sellerPricePlaceholder}
+              placeholder={t.fishFinder.sellerPricePlaceholder}
             />
           </div>
           <button type="submit" disabled={!selected}>
-            {FISH_FINDER.checkPrice}
+            {t.fishFinder.checkPrice}
           </button>
         </form>
       </section>
 
       <div aria-live="polite" aria-busy={referenceLoading}>
-        {referenceLoading && <p>{LOADING}</p>}
+        {referenceLoading && <p>{t.loading}</p>}
         <ErrorMessages messages={referenceError} />
         {reference && <ReferenceCard data={reference} />}
       </div>

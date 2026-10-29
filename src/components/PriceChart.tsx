@@ -7,17 +7,7 @@ import { CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceLine, Respo
 import type { TooltipValueType } from "recharts";
 import type { ChartOut } from "../api/types";
 import { date, rmPerKg } from "../format";
-import {
-  CHART_BAND,
-  CHART_BAND_RANGE,
-  CHART_COL_MEDIAN,
-  CHART_COL_RECORDS,
-  CHART_COL_WEEK,
-  CHART_MEDIAN_SERIES,
-  CHART_QUOTE,
-  CHART_TABLE_CAPTION,
-  CHART_TABLE_TOGGLE,
-} from "../messages";
+import { useLanguage } from "../i18n";
 import { Labels } from "./Labels";
 
 /** Recharts 3 passes `ValueType | undefined`; only finite numbers are formatted as prices. */
@@ -38,7 +28,8 @@ const TOOLTIP_STYLE = {
 };
 
 export default function PriceChart({ chart }: { chart: ChartOut }) {
-  const data = chart.points.map((p) => ({ week: date(p.week_start), median: p.median, n: p.record_count }));
+  const { lang, t } = useLanguage();
+  const data = chart.points.map((p) => ({ week: date(p.week_start, lang), median: p.median, n: p.record_count }));
   // Axis domain only (display padding), not a displayed number.
   const values = [chart.band_p25, chart.band_p75, ...chart.points.map((p) => p.median)];
   if (chart.quote) values.push(chart.quote.value);
@@ -49,13 +40,13 @@ export default function PriceChart({ chart }: { chart: ChartOut }) {
     <figure className="chart">
       <figcaption>
         <span className="chart-title">
-          {CHART_MEDIAN_SERIES} in {chart.location.name} (RM/kg)
+          {t.chartMedianSeries} {t.chartInLocation} {chart.location.name} (RM/kg)
         </span>{" "}
         <Labels source={chart.source_label} />
         {chart.quote && (
           <>
             {" "}
-            <span className="chart-title">· {CHART_QUOTE}</span> <Labels source={chart.quote.source_label} />
+            <span className="chart-title">· {t.chartQuote}</span> <Labels source={chart.quote.source_label} />
           </>
         )}
       </figcaption>
@@ -78,12 +69,12 @@ export default function PriceChart({ chart }: { chart: ChartOut }) {
               fill="#0071e3"
               fillOpacity={0.08}
               stroke="none"
-              label={{ value: CHART_BAND, position: "insideTopLeft", fontSize: 12 }}
+              label={{ value: t.chartBand, position: "insideTopLeft", fontSize: 12 }}
             />
             <Line
               type="monotone"
               dataKey="median"
-              name={CHART_MEDIAN_SERIES}
+              name={t.chartMedianSeries}
               stroke="#0071e3"
               strokeWidth={2}
               dot={false}
@@ -95,28 +86,28 @@ export default function PriceChart({ chart }: { chart: ChartOut }) {
                 y={chart.quote.value}
                 stroke="#6e6e73"
                 strokeDasharray="4 4"
-                label={{ value: `${CHART_QUOTE} ${rmPerKg(chart.quote.value)}`, position: "insideTopRight", fontSize: 12 }}
+                label={{ value: `${t.chartQuote} ${rmPerKg(chart.quote.value)}`, position: "insideTopRight", fontSize: 12 }}
               />
             )}
           </ComposedChart>
         </ResponsiveContainer>
       </div>
       <details className="disclosure">
-        <summary>{CHART_TABLE_TOGGLE}</summary>
+        <summary>{t.chartTableToggle}</summary>
         <div className="table-wrap">
           <table>
-            <caption className="sr-only">{CHART_TABLE_CAPTION}</caption>
+            <caption className="sr-only">{t.chartTableCaption}</caption>
             <thead>
               <tr>
-                <th scope="col">{CHART_COL_WEEK}</th>
-                <th scope="col">{CHART_COL_MEDIAN}</th>
-                <th scope="col">{CHART_COL_RECORDS}</th>
+                <th scope="col">{t.chartColWeek}</th>
+                <th scope="col">{t.chartColMedian}</th>
+                <th scope="col">{t.chartColRecords}</th>
               </tr>
             </thead>
             <tbody>
               {chart.points.map((p) => (
                 <tr key={p.week_start}>
-                  <td>{date(p.week_start)}</td>
+                  <td>{date(p.week_start, lang)}</td>
                   <td className="num">{rmPerKg(p.median)}</td>
                   <td className="num">{p.record_count}</td>
                 </tr>
@@ -125,7 +116,7 @@ export default function PriceChart({ chart }: { chart: ChartOut }) {
           </table>
         </div>
         <p className="meta">
-          {CHART_BAND_RANGE}: <span className="num">{rmPerKg(chart.band_p25)}</span> – <span className="num">{rmPerKg(chart.band_p75)}</span>
+          {t.chartBandRange}: <span className="num">{rmPerKg(chart.band_p25)}</span> – <span className="num">{rmPerKg(chart.band_p75)}</span>
         </p>
       </details>
     </figure>

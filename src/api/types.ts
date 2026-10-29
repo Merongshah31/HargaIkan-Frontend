@@ -233,6 +233,16 @@ export interface ForecastOut {
   quote_error: string | null;
 }
 
+export interface ModelSnapshotOut {
+  model: string;
+  model_sha256: string;
+  feature_sha256: string;
+  mae: number;
+  baseline_mae: number;
+  testing_records: number;
+  items: { item_code: string; fish_name: string; target_date: string; value: number }[];
+}
+
 /** Money / quantity input: a JSON number or short numeric string. */
 export type NumberInput = number | string;
 
@@ -309,4 +319,26 @@ export interface OverviewOut {
   suggestions_title: string;
   suggestions: SuggestionOut[];
   suggestions_notice: string | null;
+}
+
+export type AlertKind = "weather" | "festivity";
+
+/** One weather or festivity alert. `kind` only chooses the label, never a number. */
+export interface AlertOut {
+  id: string;
+  kind: AlertKind;
+  title: string;
+  body: string;
+  /** Where the alert came from, shown next to it (MET Malaysia, festival calendar, …). */
+  source: string;
+  valid_from: string | null;
+  valid_to: string | null;
+  demo: boolean;
+}
+
+export interface AlertsOut {
+  items: AlertOut[];
+  /** Set when a source is not connected; the dashboard shows this instead of a made-up warning. */
+  notice: string | null;
+  demo: boolean;
 }

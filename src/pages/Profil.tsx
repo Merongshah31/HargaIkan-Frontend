@@ -7,19 +7,10 @@ import {
   type GuestPreferences,
   useGuestPreferences,
 } from "../guest/GuestPreferencesProvider";
-import { PAGES, PROFILE, RECOMMENDATION_DISCLAIMER } from "../messages";
+import { useLanguage } from "../i18n";
 import { PageHeader } from "../components/PageHeader";
 import { useCatalog } from "../session/CatalogProvider";
-import { useDemoSession } from "../session/DemoSessionProvider";
-
-const cookingStyles: { value: CookingStyle; label: string }[] = [
-  { value: "", label: PROFILE.cookingOptions.none },
-  { value: "fried", label: PROFILE.cookingOptions.fried },
-  { value: "steamed", label: PROFILE.cookingOptions.steamed },
-  { value: "curry", label: PROFILE.cookingOptions.curry },
-  { value: "grilled", label: PROFILE.cookingOptions.grilled },
-  { value: "other", label: PROFILE.cookingOptions.other },
-];
+import { useSession } from "../session/SessionProvider";
 
 function toggle(values: string[], id: string, checked: boolean): string[] {
   return checked ? [...new Set([...values, id])] : values.filter((value) => value !== id);
@@ -31,15 +22,27 @@ function validBudget(value: string): boolean {
   return Number.isFinite(amount) && amount > 0 && amount <= 1000;
 }
 
-export function Profil({ onboarding = false }: { onboarding?: boolean }) {
+export function Profil() {
+  const { lang, t } = useLanguage();
   const { species } = useCatalog();
   const { preferences, save, clear } = useGuestPreferences();
-  const { completeOnboarding } = useDemoSession();
+  const { session, completeOnboarding } = useSession();
   const navigate = useNavigate();
+  /** True while the visitor is being taken through sign-in → preferences → dashboard. */
+  const onboarding = Boolean(session && !session.onboardingComplete);
   const [draft, setDraft] = useState<GuestPreferences>(preferences);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [budgetError, setBudgetError] = useState<string | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+
+  const cookingStyles: { value: CookingStyle; label: string }[] = [
+    { value: "", label: t.profile.cookingOptions.none },
+    { value: "fried", label: t.profile.cookingOptions.fried },
+    { value: "steamed", label: t.profile.cookingOptions.steamed },
+    { value: "curry", label: t.profile.cookingOptions.curry },
+    { value: "grilled", label: t.profile.cookingOptions.grilled },
+    { value: "other", label: t.profile.cookingOptions.other },
+  ];
 
   const update = <Key extends keyof GuestPreferences>(key: Key, value: GuestPreferences[Key]) => {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -49,19 +52,19 @@ export function Profil({ onboarding = false }: { onboarding?: boolean }) {
   const onSave = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!validBudget(draft.typicalBudgetRmPerKg)) {
-      setBudgetError(PROFILE.budgetError);
+      setBudgetError(t.profile.budgetError);
       setFeedback(null);
       return;
     }
 
     setBudgetError(null);
     save(draft);
+    setFeedback(t.profile.savedFeedback);
     if (onboarding) {
+      // The first-run flow continues to the dashboard, which the guard now lets through.
       completeOnboarding();
-      navigate("/dashboard", { replace: true });
-      return;
+      navigate("/dashboard");
     }
-    setFeedback(PROFILE.savedFeedback);
   };
 
   const onClear = () => {
@@ -75,17 +78,17 @@ export function Profil({ onboarding = false }: { onboarding?: boolean }) {
     });
     setConfirmClear(false);
     setBudgetError(null);
-    setFeedback(PROFILE.clearedFeedback);
+    setFeedback(t.profile.clearedFeedback);
   };
 
   return (
     <>
-      <PageHeader title={onboarding ? PAGES.onboarding.title : PAGES.profil.title}
-        lead={onboarding ? PAGES.onboarding.lead : PAGES.profil.lead} />
+      <PageHeader title={t.pages.profil.title} lead={t.pages.profil.lead} />
+      {onboarding && <Notice live>{t.profile.onboardingNotice}</Notice>}
       <div aria-live="polite">{feedback && <Notice live>{feedback}</Notice>}</div>
       <form className="card form" onSubmit={onSave}>
         <fieldset>
-          <legend>{PROFILE.favoriteQuestion}</legend>
+          <legend>{t.profile.favoriteQuestion}</legend>
           <div className="check-grid">
             {species.map((item) => (
               <label key={item.id} className="check">
@@ -99,21 +102,21 @@ export function Profil({ onboarding = false }: { onboarding?: boolean }) {
                     )
                   }
                 />
-                {item.name_en ?? item.name_ms}
+                {lang === "ms" ? item.name_ms : (item.name_en ?? item.name_ms)}
               </label>
             ))}
           </div>
         </fieldset>
 
         <div className="field">
-          <label htmlFor="guest-budget">{PROFILE.budgetQuestion}</label>
+          <label htmlFor="guest-budget">{t.profile.budgetQuestion}</label>
           <input
             id="guest-budget"
             type="text"
             inputMode="decimal"
             value={draft.typicalBudgetRmPerKg}
             onChange={(event) => update("typicalBudgetRmPerKg", event.target.value)}
-            placeholder={PROFILE.budgetPlaceholder}
+            placeholder={t.profile.budgetPlaceholder}
             aria-describedby={budgetError ? "guest-budget-error" : undefined}
           />
           {budgetError && (
@@ -125,16 +128,16 @@ export function Profil({ onboarding = false }: { onboarding?: boolean }) {
 
         <LocationSelect
           id="guest-location"
-          label={PROFILE.locationQuestion}
+          label={t.profile.locationQuestion}
           value={draft.preferredLocationId}
           onChange={(value) => update("preferredLocationId", value)}
-          allowEmpty={PROFILE.locationEmpty}
+          allowEmpty={t.profile.locationEmpty}
         />
 
         <fieldset>
-          <legend>{PROFILE.avoidQuestion}</legend>
-          <Notice>{PROFILE.avoidNote}</Notice>
-          <p className="meta">{RECOMMENDATION_DISCLAIMER}</p>
+          <legend>{t.profile.avoidQuestion}</legend>
+          <Notice>{t.profile.avoidNote}</Notice>
+          <p className="meta">{t.recommendationDisclaimer}</p>
           <div className="check-grid">
             {species.map((item) => (
               <label key={item.id} className="check">
@@ -148,14 +151,14 @@ export function Profil({ onboarding = false }: { onboarding?: boolean }) {
                     )
                   }
                 />
-                {item.name_en ?? item.name_ms}
+                {lang === "ms" ? item.name_ms : (item.name_en ?? item.name_ms)}
               </label>
             ))}
           </div>
         </fieldset>
 
         <div className="field">
-          <label htmlFor="guest-cooking">{PROFILE.cookingQuestion}</label>
+          <label htmlFor="guest-cooking">{t.profile.cookingQuestion}</label>
           <select
             id="guest-cooking"
             value={draft.cookingStyle}
@@ -169,29 +172,29 @@ export function Profil({ onboarding = false }: { onboarding?: boolean }) {
           </select>
         </div>
 
-        <button type="submit">{onboarding ? PROFILE.startAction : PROFILE.saveAction}</button>
+        <button type="submit">{onboarding ? t.profile.saveAndContinueAction : t.profile.saveAction}</button>
       </form>
 
-      <p className="meta">{PROFILE.deviceOnlyNote}</p>
-      {!onboarding && <section className="clear-preferences" aria-label={PROFILE.clearAction}>
+      <p className="meta">{t.profile.deviceOnlyNote}</p>
+      <section className="clear-preferences" aria-label={t.profile.clearAction}>
         {!confirmClear ? (
           <button type="button" className="secondary" onClick={() => setConfirmClear(true)}>
-            {PROFILE.clearAction}
+            {t.profile.clearAction}
           </button>
         ) : (
-          <div role="group" aria-label={PROFILE.clearConfirmation}>
+          <div role="group" aria-label={t.profile.clearConfirmation}>
             <p>
-              <strong>{PROFILE.clearConfirmation}</strong>
+              <strong>{t.profile.clearConfirmation}</strong>
             </p>
             <button type="button" className="secondary" onClick={() => setConfirmClear(false)}>
-              {PROFILE.cancelAction}
+              {t.profile.cancelAction}
             </button>{" "}
             <button type="button" className="danger" onClick={onClear}>
-              {PROFILE.confirmClearAction}
+              {t.profile.confirmClearAction}
             </button>
           </div>
         )}
-      </section>}
+      </section>
     </>
   );
 }
