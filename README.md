@@ -63,6 +63,18 @@ The dashboard is built only from published data; nothing on it extrapolates a pr
 
 The market-watch sparkline was removed: it drew a line for every row without saying what it meant, and a short line cannot show a level. Section B and C live in `src/components/SmartAlerts.tsx` and `src/components/SmartSwaps.tsx`.
 
+## Travel page (`/perjalanan`)
+
+The car form keeps every cost a user input; the optional map only fills **One-way distance (km)**.
+
+| Detail | Rule |
+| --- | --- |
+| Map | `src/components/TravelMap.tsx` on OpenStreetMap tiles (`src/travel/geo.ts` holds the tile URL, the ODbL attribution and `MAX_TILE_ZOOM`; `LocationMap` uses the same constants). No API key and no routing service. |
+| Malaysia only | The view and `maxBounds` are clamped to `MALAYSIA_BOUNDS`, and a click outside it is refused with a notice instead of being snapped somewhere else. A box is not a border, so the code states its limit: it cannot separate Singapore from Johor Bahru. |
+| Estimate | `estimatedRoadKm` = great-circle km (`haversineKm`) × `ROAD_FACTOR` 1.3, rounded to 0.1 km. Both numbers are printed (road + straight line), and **Use this distance** writes the estimate into the input, which the visitor can then edit. |
+| Mockup data | `MOCK_PLACES` is thirteen hand-written Malaysian markets/towns. They are demo labels, not a premise directory, and the panel says so (`Mockup data: … not a routing service or a toll estimate`). No toll, fare, duration or price is derived from the map. |
+| Unavailable | Device geolocation is never requested. A failed tile load says the tiles could not be loaded and asks for the distance to be typed. |
+
 ## Forecast page
 
 `/ramalan` shows **every catalogue fish at once** as a heat map. There is no fish or location picker: the page loads the model snapshot once and the reference for each fish, then draws a tile per fish.
@@ -83,6 +95,36 @@ All eleven reference calls leave together; each is retried once before its tile 
 Set the Vercel project root directory to `frontend` and set `VITE_API_BASE_URL` to the deployed Render origin. Set the backend `CORS_ORIGINS` to the Vercel origin. `vercel.json` retains a same-origin API rewrite as a fallback and the SPA route fallback.
 
 For **Cloudflare Pages**, use `npm run build` and output directory `dist`. This `frontend/` folder is itself a Git repository, so use its repository root as the Cloudflare root directory; use `frontend` only if you later publish the whole parent project as one repository. In **Settings → Variables and Secrets**, set the Production build variable `VITE_API_BASE_URL` to the public HTTPS backend origin, for example `https://your-api.example.com` (only after `/api/v1/health` returns JSON with `"status":"ok"`). Redeploy after changing it: Vite puts the value into the built JavaScript. Also include the exact Pages site origin in the backend's `CORS_ORIGINS`. The Pages build now rejects localhost, `127.0.0.1`, and missing API URLs.
+
+### Local backend with a public Cloudflare Tunnel
+
+If FastAPI is running only in a local CMD window, a public Cloudflare Pages site cannot call
+`127.0.0.1`; that address belongs to each visitor's computer. Use two terminals:
+
+1. Start the API and allow the deployed frontend origin:
+
+   ```cmd
+   cd C:\reactproject\HargaIkan\backend
+   set APP_ENV=development
+   set CORS_ORIGINS=https://hargaikan.hargaikan.workers.dev
+   D:\hargaikan-venv\Scripts\python.exe -m uvicorn hargaikan.api.main:app --host 127.0.0.1 --port 8000 --reload
+   ```
+
+2. In a second terminal, expose port 8000:
+
+   ```cmd
+   cloudflared tunnel --url http://127.0.0.1:8000
+   ```
+
+   Keep this terminal open. Copy the generated `https://...trycloudflare.com` URL and verify
+   `<tunnel-url>/api/v1/health` returns JSON.
+
+3. In Cloudflare Pages → Settings → Variables and Secrets, set the production
+   `VITE_API_BASE_URL` to that tunnel URL **without** `/api/v1`, then redeploy the frontend.
+
+Quick Tunnel URLs change whenever `cloudflared` restarts. For a permanent URL, create a named
+Cloudflare Tunnel and configure its hostname to forward to `http://127.0.0.1:8000`; use that
+stable HTTPS hostname as `VITE_API_BASE_URL` instead.
 
 All Supabase keys and Render secrets stay under `../backend`; none belong in this frontend repository or browser bundle.
 
