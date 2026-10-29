@@ -1,4 +1,5 @@
 # HargaIkan frontend
+Website: https://hargaikan.hargaikan.workers.dev
 
 React 18 + TypeScript + Vite 6 interface for the FastAPI backend in `../backend`, built as an installable PWA (see **Install as an app**). The homepage is public and links to the fish finder, forecast and travel calculator. The dashboard is behind a short first-run flow: **sign in → preferences → dashboard**. Preferences are saved locally in the browser.
 
